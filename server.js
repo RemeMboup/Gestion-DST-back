@@ -2,6 +2,7 @@ require('dotenv').config({path:'./config/.env'})
 require('./config/db')
 const User = require('./modeles/User')
 const Permis = require('./modeles/Permis')
+const Conducteur = require('./modeles/Conducteur')
 const express = require('express')
 const mongoose = require('mongoose')
 
