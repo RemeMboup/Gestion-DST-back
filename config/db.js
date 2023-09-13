@@ -5,5 +5,5 @@ mongoose.connect(
         useNewUrlParser : true,
         useUnifiedTopology : true 
     }
-).then(() => console.log("Connection a la base de donnees reussie")
+).then(() => console.log("Connection à la base de donnees reussie")
 ).catch((err) => console.log(err))

@@ -13,25 +13,25 @@ const ConducteurSchema = new Schema({
         {type: Schema.Types.ObjectId, ref: 'Permis'}
       ]
 })
-
+//creation du model conducteur
 const Conducteur = mongoose.model('Conducteur', ConducteurSchema)
 //creation de conducteur
-var conducteur = new Conducteur({
-    prenom:'Modou',
-    nom:'Diop',
-    adresse:'Pire',
-    telephone:'776787878',
-    email:'modou@gmail.com',
-    dateNaissance:'1990-12-17T03:24:00',
-    permis:["64989df94ba88e6c06c671ec"]
-})
+// var conducteur = new Conducteur({
+//     prenom:'Modou',
+//     nom:'Diop',
+//     adresse:'Pire',
+//     telephone:'776787878',
+//     email:'modou@gmail.com',
+//     dateNaissance:'1990-12-17T03:24:00',
+//     permis:["64989df94ba88e6c06c671ec"]
+// })
 
-conducteur
-.save()
-.then(console.log('Conducteur enregistre avec succes'))
-.catch(error => {console.error(error);
-})
-//Trouver tous les conducteurs
+// conducteur
+// .save()
+// .then(console.log('Conducteur enregistre avec succes'))
+// .catch(error => {console.error(error);
+// })
+// //Trouver tous les conducteurs
 Conducteur
     .find()
     .then(conducteur => {
@@ -40,3 +40,12 @@ Conducteur
     .catch(error => {
         console.error(error);
     })
+// Methode pour supprimer un objet par son id
+// var id_conducteur = "64bd55c7d0800ef2ef8ecd2f"
+// Conducteur.deleteOne({ _id: id_conducteur }).then(function(){
+//     console.log("Data deleted"); // Success
+// }).catch(function(error){
+//     console.log(error); // Failure
+// });
+
+module.exports = mongoose.model('Conducteur', ConducteurSchema)
