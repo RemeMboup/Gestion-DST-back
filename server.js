@@ -2,9 +2,16 @@ require('dotenv').config({path:'./config/.env'})
 require('./config/db')
 
 const express = require('express')
+//Importation bibliotheque bodyParser pour l analyse des requetes http comme POST et PUT
+const bodyParser = require('body-parser');
+//Importation du bibliotheque jwt(obtention du token)
+const jwt = require('jsonwebtoken');
+//Biblotheque pour crypter des donnees comme le mot de passe par exemple
+const bcrypt = require('bcrypt');
 const mongoose = require('mongoose')
 const app = express()
 app.use(express.json())
+app.use(bodyParser.json());
 
 const port = process.env.Port
 //app.use("/",router)
@@ -33,7 +40,7 @@ app.get('/users', (req, res) => {
   });
 
 //Route post pour ajouter un utilisateur
-app.post('/users', (req, res) => {
+/*app.post('/users', (req, res) => {
     const user = new User({
         _id: new mongoose.Types.ObjectId(),
         username: req.body.username,
@@ -47,7 +54,53 @@ app.post('/users', (req, res) => {
     .catch((error) => {
         res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });
     });
-});
+});*/
+// Créez un endpoint pour l'inscription d'un utilisateur.
+app.post('/users', async (req, res) => {
+    //try {
+    const body = req.body;
+    const password = body.password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+        _id: new mongoose.Types.ObjectId(),
+        username: body.username,
+        password: hashedPassword,
+        email: body.email 
+    });
+    await user.save()
+        .then((user) => {
+            res.json(user)
+            res.status(201).json({ message: 'Utilisateur inscrit avec succès !' });
+
+        })
+            
+   /* } catch (error) {
+      res.status(500).json({ error: 'Une erreur est survenue lors de l\'inscription.' });
+    }*/
+  })
+
+// Créez un endpoint pour la connexion de l'utilisateur et la génération de JWT.
+app.post('/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const user = await User.findOne({ username });
+  
+      if (req.body.username != user.username || req.body.password != user.password) {
+        return res.status(401).json({ error: 'Nom d\'utilisateur incorrect.' });
+      }
+      else {
+        const token = jwt.sign({ username: user.username }, 'votre_secret_key_secrete', {
+            expiresIn: '1h', // Durée de validité du jeton (vous pouvez la personnaliser).
+          });
+
+      }
+      res.status(200).json({ token });
+    } catch (error) {
+      res.status(500).json({ error: 'Une erreur est survenue lors de la connexion.' });
+    }
+  });
+  
 
 // Route PUT pour modifier un utilisateur par ID
 app.put('/users/:id', (req, res) => {
