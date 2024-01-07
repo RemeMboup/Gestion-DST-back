@@ -70,8 +70,7 @@ app.post('/users', async (req, res) => {
     });
     await user.save()
         .then((user) => {
-            res.json(user)
-            res.status(201).json({ message: 'Utilisateur inscrit avec succès !' });
+            res.status(201).json(user);
 
         })
             
@@ -81,25 +80,55 @@ app.post('/users', async (req, res) => {
   })
 
 // Créez un endpoint pour la connexion de l'utilisateur et la génération de JWT.
+console.log("Mareme");
 app.post('/login', async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      const user = await User.findOne({ username });
-  
-      if (req.body.username != user.username || req.body.password != user.password) {
-        return res.status(401).json({ error: 'Nom d\'utilisateur incorrect.' });
-      }
-      else {
-        const token = jwt.sign({ username: user.username }, 'votre_secret_key_secrete', {
-            expiresIn: '1h', // Durée de validité du jeton (vous pouvez la personnaliser).
-          });
+    //try {
+    const username  = req.body.username;
+    const password  = req.body.password;
+    console.log(username);
+    console.log(password);
 
-      }
-      res.status(200).json({ token });
-    } catch (error) {
-      res.status(500).json({ error: 'Une erreur est survenue lors de la connexion.' });
+    //const user = await User.findById( "6491b8fb5ce2c52e2431b44b");
+    const user = await User.findOne( { username });
+    console.log("Mareme");
+    console.log("Le mot de pass entre");
+    console.log(password);
+    console.log("Le mot de pass dans la bd");
+    if(user){
+        console.log(user.username);
+        console.log(user.password);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log("hashedPassword");
+        
+        console.log(hashedPassword);
+        
+        const isPasswordValid = await bcrypt.compare(hashedPassword, user.password);
+        console.log("Donne moi la valeur de IsPassWordValid");
+        
+        console.log(isPasswordValid);
+        console.log(!isPasswordValid);
+        if (isPasswordValid == true) {
+            return res.status(401).json({ error: 'Mot de passe incorrect.' });
+        }
+        else {
+            const token = jwt.sign({ username: user.username }, 'votre_secret_key_secrete', {
+                expiresIn: '1h', // Durée de validité du jeton (vous pouvez la personnaliser).
+            });
+        
+            res.status(200).json({ token });
+
+        }
+
     }
-  });
+    else {
+        return res.status(401).json({ error: 'Nom d\'utilisateur n\'existe pas dans la base de donnees.' });
+    }
+      //} 
+    //   catch (error) {
+    //     res.status(500).json({ error: 'Une erreur est survenue lors de la connexion.' });
+    //   }
+    });
+    
   
 
 // Route PUT pour modifier un utilisateur par ID

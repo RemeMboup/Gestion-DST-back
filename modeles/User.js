@@ -25,14 +25,14 @@ const User = mongoose.model('User', userSchema);
 //         console.error(err)
 //     })
 //recherche toutes les personnes
-// User
-//     .find()
-//     .then(docs => {
-//         console.log('Utilisateurs trouvées.',docs)
-//     })
-//     .catch(err => {
-//         console.error(err)
-//     })
+User
+    .find()
+    .then(docs => {
+        console.log('Utilisateurs trouvées.',docs)
+    })
+    .catch(err => {
+        console.error(err)
+    })
 app.get('/users', (req, res) => {
     User.find()
         .then(users => {
