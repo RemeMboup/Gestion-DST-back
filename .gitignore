@@ -1,0 +1,5 @@
+# Ignore environment variables file
+.env
+
+# Ignore database configuration file
+db.js
