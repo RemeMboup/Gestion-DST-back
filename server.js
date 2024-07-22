@@ -2,15 +2,42 @@ require('dotenv').config({path:'./config/.env'})
 require('./config/db')
 
 const express = require('express')
+//Importation bibliotheque bodyParser pour l analyse des requetes http comme POST et PUT
+const bodyParser = require('body-parser');
+//Importation du bibliotheque jwt(obtention du token)
+const jwt = require('jsonwebtoken');
+//Biblotheque pour crypter des donnees comme le mot de passe par exemple
+const bcrypt = require('bcrypt');
+
 const mongoose = require('mongoose')
 const app = express()
+const cors = require('cors');
+
+// CORS headerS
+// app.use((req, res, next) => {
+//     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+//     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+//     res.setHeader('Access-Control-Allow-Credentials', 'true');
+//     next();
+//   });
+
+// Configurez CORS pour permettre les requêtes depuis votre front-end
+app.use(cors({
+    origin: 'http://localhost:5173', // Remplacez par l'origine de votre front-end
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Autorisez les méthodes que vous utilisez
+    allowedHeaders: ['Content-Type', 'Authorization'], // Autorisez les en-têtes nécessaires
+  }));
+  
+
 app.use(express.json())
+app.use(bodyParser.json());
 
 const port = process.env.Port
 //app.use("/",router)
 app.listen(port, () => console.log(`Serveur is running at http://localhost:${port}`)
 )
-
+//Importation des modeles
 const User = require('./modeles/User')
 const Permis = require('./modeles/Permis')
 const Conducteur = require('./modeles/Conducteur')
@@ -18,8 +45,21 @@ const Camion = require('./modeles/Camion')
 const Marchandise = require('./modeles/Marchandise')
 const Entrepot = require('./modeles/Entrepot')
 const DetailChargement = require('./modeles/DetailChargement')
+const Client = require('./modeles/Client')
+const Compagnie = require('./modeles/Compagnie')
+const Conteneur = require('./modeles/Conducteur')
 
 
+// CORS headerS
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
+  });
+
+// La liste de tous les users
 app.get('/users', (req, res) => {
     User.find()
         .then(users => {
@@ -33,7 +73,7 @@ app.get('/users', (req, res) => {
   });
 
 //Route post pour ajouter un utilisateur
-app.post('/users', (req, res) => {
+/*app.post('/users', (req, res) => {
     const user = new User({
         _id: new mongoose.Types.ObjectId(),
         username: req.body.username,
@@ -47,7 +87,114 @@ app.post('/users', (req, res) => {
     .catch((error) => {
         res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });
     });
+});*/
+// Middleware pour vérifier l'unicité de l'adresse e-mail
+const checkEmailUnique = async (req, res, next) => {
+    const { email } = req.body;
+  
+    try {
+      // Vérifiez si l'adresse e-mail existe déjà dans la base de données
+      const existingUser = await User.findOne({ email });
+  
+      // Si un utilisateur avec cet e-mail existe déjà, renvoyez une erreur
+      if (existingUser) {
+        return res.status(400).json({ error: 'Adresse e-mail déjà utilisée' });
+      }
+  
+      // Si l'adresse e-mail est unique, passez au prochain middleware
+      next();
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'unicité de l\'adresse e-mail:', error);
+      return res.status(500).json({ error: 'Erreur serveur' });
+    }
+  };
+  
+  // Créez un endpoint pour l'inscription d'un utilisateur.
+  app.post('/users', checkEmailUnique, async (req, res) => {
+      //try {
+      const body = req.body;
+      const password = body.password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      const user = new User({
+          _id: new mongoose.Types.ObjectId(),
+          username: body.username,
+          password: hashedPassword,
+          email: body.email 
+      });
+      await user.save()
+          .then((user) => {
+              res.status(201).json(user);
+  
+          })
+              
+     /* } catch (error) {
+        res.status(500).json({ error: 'Une erreur est survenue lors de l\'inscription.' });
+      }*/
+    })
+  
+
+// Créez un endpoint pour la connexion de l'utilisateur et la génération de JWT.
+// app.post('/login', async (req, res) => {
+//     try {
+//       const { username, password } = req.body;
+//       const user = await User.findOne({ username });
+  
+//       if ((req.body.username != user.username && req.body.password != user.password)  || (req.body.username != user.username || req.body.password != user.password) ) {
+//         return res.status(401).json({ error: 'Nom d\'utilisateur incorrect.' });
+//       }
+//       else {
+//         const token = jwt.sign({ username: user.username }, 'votre_secret_key_secrete', {
+//             expiresIn: '1h', // Durée de validité du jeton (vous pouvez la personnaliser).
+//           });
+
+//       }
+//       res.status(200).json({ token });
+//     } catch (error) {
+//       res.status(500).json({ error: 'Une erreur est survenue lors de la connexion.' });
+//     }
+//   });
+
+app.post('/login', async (req, res) => {
+    try {
+      const email  = req.body.email;
+      const password  = req.body.password;
+      console.log(email)
+      const user = await User.findOne({email});
+      if (!user) {
+          const err = new Error('User Not Found!')
+          res.status(400).json({
+            status: 'fail',
+            message: err.message,
+          })
+
+      } else if (await bcrypt.compare(password, user.password)) {
+          const tokenPayload = {
+              email: user.email,
+          };
+          const accessToken = jwt.sign(tokenPayload, 'SECRET');
+          res.status(201).json({
+              status: 'success',
+              message: 'User Logged In!',
+              data: {
+                  accessToken,
+              },
+              });
+      } else {
+          const err = new Error('Wrong Password!');
+          res.status(400).json({
+            status: 'fail',
+            message: err.message,
+          })
+          }
+        } catch (err) {
+        res.status(err.status).json({
+            status: 'fail',
+            message: err.message,
+          });
+      }
 });
+
 
 // Route PUT pour modifier un utilisateur par ID
 app.put('/users/:id', (req, res) => {
@@ -83,6 +230,72 @@ app.delete('/users/:id', (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la suppression de l\'utilisateur' });
     });
 });
+// La liste des  clients
+app.get('/clients', (req, res) => {
+    Client.find()
+        .then(clients => {
+            res.json(clients)
+        })
+        .catch((err) => {
+            console.error('Erreur lors de la récupération des clients :', err);
+            res.status(500).send('Erreur lors de la récupération des clients');
+
+        })
+  });
+
+//Route post pour ajouter un client
+app.post('/clients', (req, res) => {
+    const client = new Client({
+        _id: new mongoose.Types.ObjectId(),
+        nom: req.body.nom,
+        adresse: req.body.adresse,
+        email: req.body.email,
+        telephone: req.body.telephone
+    });
+    client.save()
+    .then((client) => {
+        res.json(client);
+    })
+    .catch((error) => {
+        res.status(500).json({ error: 'Erreur lors de la création du client' });
+    });
+});
+// Route PUT pour modifier un client par ID
+app.put('/clients/:id', (req, res) => {
+    body={
+        nom: req.body.nom,
+        adresse: req.body.adresse,
+        email: req.body.email,
+        telephone: req.body.telephone
+    }
+    Client.findByIdAndUpdate(req.params.id, body)
+    .then((client) => {
+        if (client) {
+            res.json(client);
+        } else {
+            res.status(404).json({ error: 'Client non trouvé' });
+        }
+    })
+    .catch((error) => {
+        res.status(500).json({ error: 'Erreur lors de la modification du client' })
+    });
+});
+
+// // Route DELETE pour supprimer une marchandise par ID
+app.delete('/clients/:id', (req, res) => {
+    Client.findByIdAndDelete(req.params.id)
+    .then((client) => {
+        if (client) {
+            res.json(client);
+        } else {
+            res.status(404).json({ error: 'Client non trouvé' });
+        }
+        })
+    .catch((error) => {
+        res.status(500).json({ error: 'Erreur lors de la suppression du client' });
+    });
+});
+
 //Get all marchandise
 app.get('/marchandises', (req, res) => {
     Marchandise.find()
