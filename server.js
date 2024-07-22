@@ -8,7 +8,10 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 //Biblotheque pour crypter des donnees comme le mot de passe par exemple
 const bcrypt = require('bcrypt');
+<<<<<<< HEAD
 
+=======
+>>>>>>> 96e6e4f369be70594d0ea41b5aafbda386502222
 const mongoose = require('mongoose')
 const app = express()
 const cors = require('cors');
@@ -88,6 +91,7 @@ app.get('/users', (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });
     });
 });*/
+<<<<<<< HEAD
 // Middleware pour vérifier l'unicité de l'adresse e-mail
 const checkEmailUnique = async (req, res, next) => {
     const { email } = req.body;
@@ -194,6 +198,83 @@ app.post('/login', async (req, res) => {
           });
       }
 });
+=======
+// Créez un endpoint pour l'inscription d'un utilisateur.
+app.post('/users', async (req, res) => {
+    //try {
+    const body = req.body;
+    const password = body.password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+        _id: new mongoose.Types.ObjectId(),
+        username: body.username,
+        password: hashedPassword,
+        email: body.email 
+    });
+    await user.save()
+        .then((user) => {
+            res.status(201).json(user);
+
+        })
+            
+   /* } catch (error) {
+      res.status(500).json({ error: 'Une erreur est survenue lors de l\'inscription.' });
+    }*/
+  })
+
+// Créez un endpoint pour la connexion de l'utilisateur et la génération de JWT.
+console.log("Mareme");
+app.post('/login', async (req, res) => {
+    //try {
+    const username  = req.body.username;
+    const password  = req.body.password;
+    console.log(username);
+    console.log(password);
+
+    //const user = await User.findById( "6491b8fb5ce2c52e2431b44b");
+    const user = await User.findOne( { username });
+    console.log("Mareme");
+    console.log("Le mot de pass entre");
+    console.log(password);
+    console.log("Le mot de pass dans la bd");
+    if(user){
+        console.log(user.username);
+        console.log(user.password);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log("hashedPassword");
+        
+        console.log(hashedPassword);
+        
+        const isPasswordValid = await bcrypt.compare(hashedPassword, user.password);
+        console.log("Donne moi la valeur de IsPassWordValid");
+        
+        console.log(isPasswordValid);
+        console.log(!isPasswordValid);
+        if (isPasswordValid == true) {
+            return res.status(401).json({ error: 'Mot de passe incorrect.' });
+        }
+        else {
+            const token = jwt.sign({ username: user.username }, 'votre_secret_key_secrete', {
+                expiresIn: '1h', // Durée de validité du jeton (vous pouvez la personnaliser).
+            });
+        
+            res.status(200).json({ token });
+
+        }
+
+    }
+    else {
+        return res.status(401).json({ error: 'Nom d\'utilisateur n\'existe pas dans la base de donnees.' });
+    }
+      //} 
+    //   catch (error) {
+    //     res.status(500).json({ error: 'Une erreur est survenue lors de la connexion.' });
+    //   }
+    });
+    
+  
+>>>>>>> 96e6e4f369be70594d0ea41b5aafbda386502222
 
 
 // Route PUT pour modifier un utilisateur par ID
