@@ -1,5 +1,5 @@
 # Ignore environment variables file
-.env
+configure/.env
 
 # Ignore database configuration file
-db.js
+configure/.db.js

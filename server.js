@@ -8,10 +8,8 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 //Biblotheque pour crypter des donnees comme le mot de passe par exemple
 const bcrypt = require('bcrypt');
-<<<<<<< HEAD
 
-=======
->>>>>>> 96e6e4f369be70594d0ea41b5aafbda386502222
+
 const mongoose = require('mongoose')
 const app = express()
 const cors = require('cors');
@@ -91,7 +89,7 @@ app.get('/users', (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur' });
     });
 });*/
-<<<<<<< HEAD
+
 // Middleware pour vérifier l'unicité de l'adresse e-mail
 const checkEmailUnique = async (req, res, next) => {
     const { email } = req.body;
@@ -198,7 +196,6 @@ app.post('/login', async (req, res) => {
           });
       }
 });
-=======
 // Créez un endpoint pour l'inscription d'un utilisateur.
 app.post('/users', async (req, res) => {
     //try {
@@ -273,9 +270,6 @@ app.post('/login', async (req, res) => {
     //   }
     });
     
-  
->>>>>>> 96e6e4f369be70594d0ea41b5aafbda386502222
-
 
 // Route PUT pour modifier un utilisateur par ID
 app.put('/users/:id', (req, res) => {
